@@ -36,7 +36,7 @@ public class ProposeRouletteService {
 		}
 
 		String rl = row.getRlNm() != null ? row.getRlNm() : "";
-
+		String setterNm = row.getSetterNm();
 		String proposeText = rl + "의\n프로포즈";
 		String mainLetter = normalizeLetterNewlines(row.getMainTxt());
 		String finalMsg = "프로포즈를 수락하셨습니다.\n" + rl + "를 마주보고 진실을 전하세요";
@@ -57,6 +57,7 @@ public class ProposeRouletteService {
 		model.addAttribute("respNotice", formatRespNotice(row.getRespDt()));
 		model.addAttribute("validityPeriodText", formatValidityPeriod(row.getStartDt(), row.getEndDt()));
 		model.addAttribute("rlNm", rl);
+		model.addAttribute("setterNm", setterNm);
 		return true;
 	}
 

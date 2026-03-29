@@ -518,6 +518,12 @@
 			text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
 		}
 
+		.slice-label .slice-label__inner {
+			display: block;
+			transform-origin: center center;
+		}
+
+		/* 당첨 칸만 분홍 강조 (다른 칸은 sliceLabelClassForIndex 그대로) */
 		.slice-label.propose-reveal {
 			color: #ad1457;
 			font-size: clamp(12px, 8.2vw, 19px);
@@ -526,10 +532,7 @@
 			max-width: 140px;
 		}
 
-		/* 인라인 transform(회전·위치) 유지: 스케일은 내부 span만 */
 		.slice-label.propose-reveal .slice-label__inner {
-			display: block;
-			transform-origin: center center;
 			animation: proposeLabelPulse 1.2s ease-in-out infinite;
 		}
 
@@ -651,8 +654,8 @@
 			background: rgba(62, 39, 35, 0.5);
 			backdrop-filter: blur(5px);
 			opacity: 1;
-			/* 페이드 시 딤·모달이 따로 움직여 ‘이중 모달’처럼 보이므로 즉시 표시 */
-			transition: none;
+			/* 모달 modalReveal(0.28s)과 동일 타이밍 — 딤 즉시 점등 + 모달만 움직이면 두 번 뜨는 느낌 */
+			transition: opacity 0.28s ease-out;
 		}
 
 		.overlay--pre-modal .overlay-dim {
@@ -1083,6 +1086,14 @@
 			];
 
 			var PROPOSE_TEXT = "신부의\n프로포즈";
+			/* 당첨 칸 제외 나머지 칸 (시계 방향·인덱스 순으로 채움) */
+			var OTHER_PROPOSE_PHRASES = [
+				"나 믿지?",
+				"좋아",
+				"행복하게 해줄게",
+				"사랑해"
+			];
+			var SETTER_NM = "아무개";
 			var MAIN_LETTER =
 					"내 인생에서 가장 아름다운 일이 있다면,\n"+
 					"그건 바로 너를 만난 거야.\n"+
@@ -1167,15 +1178,19 @@
 				}
 			}
 
+			function sliceLabelClassForIndex(i) {
+				var id = PRIZES[i].id;
+				var accent =
+					!PRIZES[i].lose && (id === "p3000" || id === "p10000") ? " accent-blue" : "";
+				return "slice-label" + (PRIZES[i].lose ? " gray" : "") + accent;
+			}
+
 			function placeLabels() {
 				sliceLabelEls = [];
 				for (var i = 0; i < PRIZES.length; i++) {
 					var deg = i * SLICE + SLICE / 2;
 					var el = document.createElement("div");
-					var id = PRIZES[i].id;
-					var accent =
-						!PRIZES[i].lose && (id === "p3000" || id === "p10000") ? " accent-blue" : "";
-					el.className = "slice-label" + (PRIZES[i].lose ? " gray" : "") + accent;
+					el.className = sliceLabelClassForIndex(i);
 					el.textContent = PRIZES[i].wheelText;
 					el.style.transform =
 						"translate(-50%, -50%) rotate(" +
@@ -1259,15 +1274,35 @@
 			}
 
 			function revealWinningSlice(winIndex) {
-				var el = sliceLabelEls[winIndex];
-				if (!el || PRIZES[winIndex].lose) return;
-				el.textContent = "";
-				var inner = document.createElement("span");
-				inner.className = "slice-label__inner";
-				inner.textContent = PROPOSE_TEXT;
-				el.appendChild(inner);
-				el.classList.remove("accent-blue");
-				el.classList.add("propose-reveal");
+				if (!sliceLabelEls[winIndex] || PRIZES[winIndex].lose) return;
+				var phraseIdx = 0;
+				var i;
+				for (i = 0; i < PRIZES.length; i++) {
+					var el = sliceLabelEls[i];
+					if (!el) continue;
+					el.textContent = "";
+					el.className =
+						i === winIndex
+							? "slice-label propose-reveal"
+							: sliceLabelClassForIndex(i);
+					var inner = document.createElement("span");
+					inner.className = "slice-label__inner";
+					if (i === winIndex) {
+						inner.textContent = PROPOSE_TEXT;
+					} else {
+						inner.textContent = OTHER_PROPOSE_PHRASES[phraseIdx];
+						phraseIdx += 1;
+					}
+					el.appendChild(inner);
+				}
+			}
+
+			function letterTextFromStored(s) {
+				if (s == null || s === "") return "";
+				return String(s)
+					.replace(/\\r\\n/g, "\n")
+					.replace(/\\n/g, "\n")
+					.replace(/\\r/g, "\n");
 			}
 
 			function showPhase1Propose() {
@@ -1275,11 +1310,14 @@
 				modalTitle.innerHTML =
 					'<span class="modal-title-eng">💍 Will you marry me?</span>';
 				modalSub.textContent = "";
-				modalBody.innerHTML =
-					'<p class="propose-main-msg">' +
-					MAIN_LETTER +
-					"</p>" +
-					'<div class="modal-accept-block">' +
+				modalBody.textContent = "";
+				var pLetter = document.createElement("p");
+				pLetter.className = "propose-main-msg";
+				pLetter.textContent = letterTextFromStored(MAIN_LETTER);
+				modalBody.appendChild(pLetter);
+				var acceptBlock = document.createElement("div");
+				acceptBlock.className = "modal-accept-block";
+				acceptBlock.innerHTML =
 					'<p class="modal-accept-hint" id="modalAcceptHint">' +
 					'<span class="modal-accept-num" id="modalAcceptNum">' +
 					String(ACCEPT_COUNTDOWN_SEC) +
@@ -1289,10 +1327,15 @@
 					'<div class="modal-accept-btns">' +
 					'<button type="button" class="btn-yes" id="btnAcceptYes">수락</button>' +
 					'<button type="button" class="btn-no" id="btnAcceptNo">거절</button>' +
-					"</div></div>";
+					"</div>";
+				modalBody.appendChild(acceptBlock);
 				btnClose.classList.add("is-hidden");
-				overlay.classList.remove("overlay--pre-modal");
-				runCountdownAndAccept();
+				requestAnimationFrame(function () {
+					requestAnimationFrame(function () {
+						overlay.classList.remove("overlay--pre-modal");
+						runCountdownAndAccept();
+					});
+				});
 			}
 
 			function runCountdownAndAccept() {
@@ -1327,7 +1370,9 @@
 				if (eventStrip) eventStrip.textContent = STRIP_TEXT_WON;
 				if (pageSubtitle) {
 					pageSubtitle.innerHTML =
-						"<em>럭키 룰렛</em>에 참여하고<br />아무개 구속권을 받아가세요!";
+						"<em>럭키 룰렛</em>에 참여하고<br />" +
+						(SETTER_NM || "당신") +
+						" 구속권을 받아가세요!";
 				}
 				var hubEv = document.querySelector(".hub-lines--event");
 				var hubLove = document.querySelector(".hub-lines--love");

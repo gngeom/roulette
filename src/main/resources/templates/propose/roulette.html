@@ -518,6 +518,12 @@
 			text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
 		}
 
+		.slice-label .slice-label__inner {
+			display: block;
+			transform-origin: center center;
+		}
+
+		/* 당첨 칸만 분홍 강조 (다른 칸은 sliceLabelClassForIndex 그대로) */
 		.slice-label.propose-reveal {
 			color: #ad1457;
 			font-size: clamp(12px, 8.2vw, 19px);
@@ -526,10 +532,7 @@
 			max-width: 140px;
 		}
 
-		/* 인라인 transform(회전·위치) 유지: 스케일은 내부 span만 */
 		.slice-label.propose-reveal .slice-label__inner {
-			display: block;
-			transform-origin: center center;
 			animation: proposeLabelPulse 1.2s ease-in-out infinite;
 		}
 
@@ -1083,7 +1086,15 @@
 			];
 
 			var PROPOSE_TEXT = /*[[${proposeText}]]*/ "신부의\n프로포즈";
+			/* 당첨 칸 제외 나머지 칸 (시계 방향·인덱스 순으로 채움) */
+			var OTHER_PROPOSE_PHRASES = [
+				"나 믿지?",
+				"좋아",
+				"행복하게 해줄게",
+				"사랑해"
+			];
 			var RL_NM = /*[[${rlNm}]]*/ "";
+			var SETTER_NM = /*[[${setterNm}]]*/ "";
 			var MAIN_LETTER = /*[[${mainLetter}]]*/ "";
 			var FINAL_MSG = /*[[${finalMsg}]]*/ "프로포즈를 수락하셨습니다.";
 			var STRIP_TEXT_WON = /*[[${stripWon}]]*/ "축하합니다!";
@@ -1161,15 +1172,19 @@
 				}
 			}
 
+			function sliceLabelClassForIndex(i) {
+				var id = PRIZES[i].id;
+				var accent =
+					!PRIZES[i].lose && (id === "p3000" || id === "p10000") ? " accent-blue" : "";
+				return "slice-label" + (PRIZES[i].lose ? " gray" : "") + accent;
+			}
+
 			function placeLabels() {
 				sliceLabelEls = [];
 				for (var i = 0; i < PRIZES.length; i++) {
 					var deg = i * SLICE + SLICE / 2;
 					var el = document.createElement("div");
-					var id = PRIZES[i].id;
-					var accent =
-						!PRIZES[i].lose && (id === "p3000" || id === "p10000") ? " accent-blue" : "";
-					el.className = "slice-label" + (PRIZES[i].lose ? " gray" : "") + accent;
+					el.className = sliceLabelClassForIndex(i);
 					el.textContent = PRIZES[i].wheelText;
 					el.style.transform =
 						"translate(-50%, -50%) rotate(" +
@@ -1253,15 +1268,27 @@
 			}
 
 			function revealWinningSlice(winIndex) {
-				var el = sliceLabelEls[winIndex];
-				if (!el || PRIZES[winIndex].lose) return;
-				el.textContent = "";
-				var inner = document.createElement("span");
-				inner.className = "slice-label__inner";
-				inner.textContent = PROPOSE_TEXT;
-				el.appendChild(inner);
-				el.classList.remove("accent-blue");
-				el.classList.add("propose-reveal");
+				if (!sliceLabelEls[winIndex] || PRIZES[winIndex].lose) return;
+				var phraseIdx = 0;
+				var i;
+				for (i = 0; i < PRIZES.length; i++) {
+					var el = sliceLabelEls[i];
+					if (!el) continue;
+					el.textContent = "";
+					el.className =
+						i === winIndex
+							? "slice-label propose-reveal"
+							: sliceLabelClassForIndex(i);
+					var inner = document.createElement("span");
+					inner.className = "slice-label__inner";
+					if (i === winIndex) {
+						inner.textContent = PROPOSE_TEXT;
+					} else {
+						inner.textContent = OTHER_PROPOSE_PHRASES[phraseIdx];
+						phraseIdx += 1;
+					}
+					el.appendChild(inner);
+				}
 			}
 
 			function letterTextFromStored(s) {
@@ -1339,7 +1366,7 @@
 				if (pageSubtitle) {
 					pageSubtitle.innerHTML =
 						"<em>럭키 룰렛</em>에 참여하고<br />" +
-						(RL_NM || "당신") +
+						(SETTER_NM || "당신") +
 						" 구속권을 받아가세요!";
 				}
 				var hubEv = document.querySelector(".hub-lines--event");
