@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>오늘의 룰렛 — 프로포즈</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet" />
+	<style>
+		:root {
+			/* GS25 이벤트 페이지(event/roulette.html)와 동일 톤 — 당첨 전 기본 */
+			--gs-blue: #0072bc;
+			--gs-cyan: #33badf;
+			--gs-blue-dark: #005a96;
+			--slice-light: #f7fcff;
+			--slice-sky: #bfe8f5;
+			--slice-lose: #d8e6ef;
+			--rim-navy: #0c2847;
+			--bulb-yellow: #ffeb3b;
+			--pin-red: #e53935;
+			--bg-page: #e3f2fb;
+			--text-dark: #1a2d3d;
+			--label-ink: #0a2d4a;
+			--bubble-pink: #ff7eb3;
+			--bubble-pink-dark: #ff5c9d;
+			--rim-w: 12px;
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			font-family: "Noto Sans KR", "Gowun Batang", serif;
+			min-height: 100vh;
+			color: var(--text-dark);
+			overflow-x: hidden;
+			position: relative;
+			background: linear-gradient(180deg, #e8f4fc 0%, #c9dff0 45%, #a8c9e0 100%);
+			transition: background 0.85s ease, color 0.5s ease;
+		}
+
+		/* 당첨 후: 노란 프로포즈 배경 + 꽃 장식 */
+		body.propose-won {
+			color: #4e342e;
+			background: linear-gradient(165deg, #fffde7 0%, #fff9c4 35%, #ffecb3 70%, #ffe082 100%);
+			--slice-light: #fffef7;
+			--slice-sky: #ffeaa7;
+			--slice-lose: #f0e6d8;
+			--rim-navy: #8d6e63;
+			--label-ink: #5d4037;
+		}
+
+		/* 배경 꽃·하트 — 당첨 전 숨김 */
+		.bg-deco {
+			position: fixed;
+			inset: 0;
+			pointer-events: none;
+			z-index: 0;
+			overflow: hidden;
+			opacity: 0;
+			transition: opacity 0.85s ease;
+		}
+
+		body.propose-won .bg-deco {
+			opacity: 1;
+		}
+
+		.bg-deco svg {
+			position: absolute;
+			opacity: 0.45;
+		}
+
+		.event-strip {
+			position: relative;
+			z-index: 1;
+			background: linear-gradient(90deg, var(--gs-blue-dark) 0%, var(--gs-blue) 40%, var(--gs-cyan) 100%);
+			color: #fff;
+			text-align: center;
+			padding: 10px 16px;
+			font-size: 13px;
+			font-weight: 700;
+			letter-spacing: 0.02em;
+			box-shadow: 0 2px 8px rgba(0, 82, 140, 0.2);
+			max-height: 120px;
+			opacity: 1;
+			transition: max-height 0.55s ease, opacity 0.45s ease, padding 0.55s ease, margin 0.55s ease;
+			overflow: hidden;
+		}
+
+		body.propose-won .event-strip {
+			max-height: 0;
+			opacity: 0;
+			padding-top: 0;
+			padding-bottom: 0;
+			margin: 0;
+			box-shadow: none;
+			pointer-events: none;
+		}
+
+		.logo-area {
+			text-align: center;
+			margin-bottom: 8px;
+		}
+
+		.logo-img {
+			display: block;
+			max-width: min(220px, 72vw);
+			height: auto;
+			margin: 0 auto;
+			mix-blend-mode: multiply;
+		}
+
+		.subtitle {
+			text-align: center;
+			font-size: 15px;
+			font-weight: 700;
+			color: #444;
+			margin-top: 12px;
+			line-height: 1.5;
+			transition: color 0.45s ease;
+		}
+
+		body.propose-won .subtitle {
+			color: #5d4037;
+		}
+
+		.subtitle em {
+			color: var(--gs-blue);
+			font-style: normal;
+			transition: color 0.45s ease;
+		}
+
+		body.propose-won .subtitle em {
+			color: #c2185b;
+		}
+
+		.bg-deco .f1 {
+			top: 5%;
+			left: 3%;
+			width: min(100px, 22vw);
+			animation: float 7s ease-in-out infinite;
+		}
+
+		.bg-deco .f2 {
+			top: 12%;
+			right: 5%;
+			width: min(90px, 20vw);
+			animation: float 8s ease-in-out infinite 0.5s;
+		}
+
+		.bg-deco .f3 {
+			bottom: 18%;
+			left: 8%;
+			width: min(85px, 18vw);
+			animation: float 6s ease-in-out infinite 1s;
+		}
+
+		.bg-deco .f4 {
+			bottom: 10%;
+			right: 10%;
+			width: min(110px, 24vw);
+			animation: float 9s ease-in-out infinite 0.3s;
+		}
+
+		.bg-deco .heart {
+			top: 40%;
+			left: 15%;
+			width: 36px;
+			opacity: 0.35;
+			animation: float 5s ease-in-out infinite;
+		}
+
+		.bg-deco .heart2 {
+			top: 55%;
+			right: 12%;
+			width: 28px;
+			opacity: 0.3;
+			animation: float 6s ease-in-out infinite 2s;
+		}
+
+		@keyframes float {
+			0%,
+			100% {
+				transform: translateY(0) rotate(0deg);
+			}
+			50% {
+				transform: translateY(-12px) rotate(4deg);
+			}
+		}
+
+		.wrap {
+			position: relative;
+			z-index: 1;
+			max-width: 420px;
+			margin: 0 auto;
+			padding: 22px 16px 48px;
+		}
+
+		.page-title {
+			text-align: center;
+			font-family: "Gowun Batang", serif;
+			font-size: clamp(1.35rem, 4.5vw, 1.75rem);
+			font-weight: 700;
+			color: #6d4c41;
+			margin-bottom: 6px;
+			text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+		}
+
+		.page-sub {
+			text-align: center;
+			font-size: 14px;
+			font-weight: 600;
+			color: #795548;
+			line-height: 1.5;
+			margin-bottom: 8px;
+		}
+
+		.page-sub em {
+			color: #c2185b;
+			font-style: normal;
+			font-weight: 800;
+		}
+
+		.card {
+			background: rgba(255, 255, 255, 0.88);
+			border-radius: 22px;
+			padding: 22px 16px 26px;
+			margin-top: 12px;
+			box-shadow: 0 10px 40px rgba(183, 121, 103, 0.18), 0 2px 12px rgba(0, 0, 0, 0.06);
+			border: 3px solid rgba(255, 183, 197, 0.85);
+			backdrop-filter: blur(6px);
+		}
+
+		.wheel-section {
+			position: relative;
+			width: min(100%, 320px);
+			aspect-ratio: 1;
+			margin: 0 auto 18px;
+			container-type: size;
+			--bubble-lift: clamp(39px, 8cqw, 66px);
+		}
+
+		.pointer-pin {
+			position: absolute;
+			left: 50%;
+			top: -8px;
+			transform: translateX(-50%);
+			z-index: 12;
+			width: 36px;
+			height: 44px;
+			filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.25));
+		}
+
+		.pointer-pin svg {
+			display: block;
+			width: 100%;
+			height: 100%;
+		}
+
+		.wheel-outer {
+			position: absolute;
+			inset: 14px;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.free-bubble {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, calc(-50% - var(--bubble-lift, 56px)));
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			z-index: 11;
+			pointer-events: none;
+			filter: drop-shadow(0 3px 6px rgba(194, 24, 91, 0.2));
+		}
+
+		.free-bubble__label {
+			display: block;
+			background: linear-gradient(180deg, #f8bbd9 0%, #f48fb1 100%);
+			color: #fff;
+			font-size: clamp(10px, 2.8vw, 12px);
+			font-weight: 900;
+			padding: 7px 11px 8px;
+			border-radius: 14px;
+			border: 2px solid rgba(255, 255, 255, 0.65);
+			white-space: nowrap;
+		}
+
+		.free-bubble__tail {
+			width: 0;
+			height: 0;
+			border-left: 9px solid transparent;
+			border-right: 9px solid transparent;
+			border-top: 11px solid #ec407a;
+			margin-top: -1px;
+		}
+
+		.wheel {
+			position: absolute;
+			inset: 0;
+			border-radius: 50%;
+			box-sizing: border-box;
+			border: 12px solid var(--rim-navy);
+			overflow: visible;
+			container-type: size;
+			background: conic-gradient(
+				var(--slice-light) 0deg 72deg,
+				var(--slice-sky) 72deg 144deg,
+				var(--slice-light) 144deg 216deg,
+				var(--slice-sky) 216deg 288deg,
+				var(--slice-lose) 288deg 360deg
+			);
+			background-clip: padding-box;
+			transition: transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+			box-shadow: 0 6px 18px rgba(93, 64, 55, 0.2), inset 0 0 0 3px rgba(255, 255, 255, 0.75);
+		}
+
+		.wheel-rim-lights {
+			position: absolute;
+			inset: -12px;
+			border-radius: 50%;
+			pointer-events: none;
+			z-index: 5;
+		}
+
+		.rim-bulb-dot {
+			position: absolute;
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			background: radial-gradient(circle at 32% 28%, #fff9c4 0%, #ffeb3b 45%, #fbc02d 100%);
+			box-shadow: 0 1px 2px rgba(93, 64, 55, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.65);
+			transform: translate(-50%, -50%);
+		}
+
+		.wheel-center-fixed {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			width: 24%;
+			min-width: 58px;
+			aspect-ratio: 1;
+			background: linear-gradient(165deg, #f48fb1 0%, #ad1457 100%);
+			border-radius: 50%;
+			border: 3px solid rgba(255, 255, 255, 0.95);
+			box-shadow: 0 4px 16px rgba(173, 20, 87, 0.35);
+			z-index: 9;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			line-height: 1.05;
+			pointer-events: none;
+			color: #fff;
+			padding: 4px;
+		}
+
+		.wheel-center-fixed .hub-line1 {
+			font-size: clamp(7px, 1.9vw, 9px);
+			font-weight: 700;
+			opacity: 0.95;
+		}
+
+		.wheel-center-fixed .hub-line2 {
+			font-size: clamp(11px, 3.2vw, 14px);
+			font-weight: 900;
+			letter-spacing: 0.06em;
+			margin-top: 2px;
+		}
+
+		.slice-label {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			width: 40%;
+			max-width: 120px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			font-size: clamp(8px, 6vw, 14.3px);
+			font-weight: 800;
+			color: var(--label-ink);
+			text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+			line-height: 1.2;
+			pointer-events: none;
+			transform-origin: center center;
+			white-space: pre-line;
+			word-break: keep-all;
+			min-height: 2.6em;
+			z-index: 2;
+			transition: color 0.35s ease, font-size 0.35s ease;
+		}
+
+		.slice-label.gray {
+			color: #5d4037;
+			font-size: 6vw;
+		}
+
+		.slice-label.accent-blue {
+			color: #1478c1;
+		}
+
+		.slice-label.propose-reveal {
+			color: #ad1457;
+			font-size: clamp(9px, 5.5vw, 13px);
+			font-weight: 900;
+			text-shadow: 0 0 12px rgba(255, 182, 193, 0.9);
+		}
+
+		.btn-participate {
+			display: block;
+			width: 100%;
+			max-width: 280px;
+			margin: 0 auto;
+			padding: 16px 24px;
+			font-family: inherit;
+			font-size: 17px;
+			font-weight: 900;
+			color: #fff;
+			background: linear-gradient(180deg, #f48fb1 0%, #c2185b 100%);
+			border: none;
+			border-radius: 999px;
+			cursor: pointer;
+			box-shadow: 0 4px 0 #880e4f, 0 10px 28px rgba(194, 24, 91, 0.35);
+			transition: transform 0.08s ease;
+		}
+
+		.btn-participate:hover:not(:disabled) {
+			transform: translateY(-2px);
+		}
+
+		.btn-participate:disabled {
+			opacity: 0.65;
+			cursor: not-allowed;
+		}
+
+		.notice {
+			margin-top: 14px;
+			font-size: 11px;
+			color: #6d4c41;
+			text-align: center;
+			line-height: 1.6;
+			opacity: 0.9;
+		}
+
+		/* 오버레이 · 연출 */
+		.overlay {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: rgba(62, 39, 35, 0.5);
+			z-index: 100;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+			backdrop-filter: blur(5px);
+		}
+
+		.overlay.show {
+			display: flex;
+			flex-wrap: wrap;
+			align-content: center;
+		}
+
+		.fx-layer {
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			overflow: hidden;
+			z-index: 0;
+		}
+
+		.confetti {
+			position: absolute;
+			width: 10px;
+			height: 10px;
+			top: -12px;
+			border-radius: 2px;
+			animation: confettiFall linear forwards;
+		}
+
+		@keyframes confettiFall {
+			to {
+				transform: translateY(110vh) rotate(720deg);
+				opacity: 0.85;
+			}
+		}
+
+		.petal {
+			position: absolute;
+			width: 14px;
+			height: 20px;
+			background: radial-gradient(ellipse at 30% 30%, #fce4ec, #f48fb1);
+			border-radius: 50% 50% 50% 0;
+			top: -24px;
+			opacity: 0.9;
+			animation: petalFall linear forwards;
+		}
+
+		@keyframes petalFall {
+			to {
+				transform: translateY(110vh) translateX(40px) rotate(180deg);
+				opacity: 0.3;
+			}
+		}
+
+		.modal {
+			position: relative;
+			z-index: 2;
+			background: linear-gradient(180deg, #fff 0%, #fff8fb 100%);
+			border-radius: 24px;
+			padding: 26px 20px 22px;
+			max-width: 360px;
+			width: 100%;
+			text-align: center;
+			box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+			border: 4px solid #f8bbd9;
+			transform: translateZ(0);
+		}
+
+		.overlay.show .modal {
+			animation: modalReveal 0.28s ease-out both;
+		}
+
+		@keyframes modalReveal {
+			from {
+				opacity: 0;
+				transform: translateY(12px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.modal h2 {
+			font-family: "Gowun Batang", serif;
+			font-size: 1.65rem;
+			font-weight: 700;
+			color: #ad1457;
+			margin-bottom: 12px;
+		}
+
+		.modal .sub {
+			font-size: 14px;
+			color: #6d4c41;
+			margin-bottom: 16px;
+			line-height: 1.55;
+		}
+
+		.propose-main-msg {
+			font-family: "Gowun Batang", serif;
+			font-size: clamp(1rem, 3.8vw, 1.12rem);
+			font-weight: 700;
+			color: #4e342e;
+			line-height: 1.75;
+			padding: 8px 4px 4px;
+		}
+
+		.btn-close {
+			margin-top: 16px;
+			padding: 12px 36px;
+			font-family: inherit;
+			font-size: 15px;
+			font-weight: 700;
+			color: #fff;
+			background: linear-gradient(180deg, #ec407a 0%, #ad1457 100%);
+			border: none;
+			border-radius: 999px;
+			cursor: pointer;
+			box-shadow: 0 3px 0 #880e4f;
+		}
+
+		.btn-close.is-hidden {
+			display: none;
+		}
+
+		.modal-lose h2 {
+			color: #795548;
+		}
+
+		/* 자동 수락 알럿 패널 */
+		.accept-panel {
+			display: none;
+			position: fixed;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			z-index: 120;
+			width: min(340px, calc(100% - 32px));
+			background: #fff;
+			border-radius: 20px;
+			padding: 22px 18px 18px;
+			box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+			border: 3px solid #ffd54f;
+			text-align: center;
+		}
+
+		.accept-panel.show {
+			display: block;
+			animation: modalReveal 0.25s ease-out both;
+		}
+
+		.accept-panel h3 {
+			font-size: 15px;
+			font-weight: 800;
+			color: #5d4037;
+			margin-bottom: 12px;
+			line-height: 1.45;
+		}
+
+		.accept-count {
+			font-size: 42px;
+			font-weight: 900;
+			color: #c2185b;
+			margin: 8px 0 14px;
+			font-variant-numeric: tabular-nums;
+		}
+
+		.accept-btns {
+			display: flex;
+			gap: 10px;
+			justify-content: center;
+			margin-top: 8px;
+		}
+
+		.accept-btns button {
+			flex: 1;
+			max-width: 130px;
+			padding: 12px 10px;
+			font-family: inherit;
+			font-size: 14px;
+			font-weight: 800;
+			border-radius: 12px;
+			border: none;
+			cursor: pointer;
+		}
+
+		.btn-yes {
+			background: linear-gradient(180deg, #66bb6a 0%, #2e7d32 100%);
+			color: #fff;
+			box-shadow: 0 3px 0 #1b5e20;
+		}
+
+		.btn-no {
+			background: #efebe9;
+			color: #5d4037;
+			box-shadow: 0 2px 0 #bcaaa4;
+		}
+
+		.final-msg {
+			font-family: "Gowun Batang", serif;
+			font-size: clamp(1.05rem, 3.6vw, 1.2rem);
+			font-weight: 700;
+			color: #4e342e;
+			line-height: 1.8;
+			padding: 6px 2px;
+		}
+	</style>
+</head>
+<body>
+	<div class="bg-deco" aria-hidden="true">
+		<svg class="f1" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+			<path fill="#f8bbd9" d="M40 8c4 12 14 22 26 26-12 4-22 14-26 26-4-12-14-22-26-26 12-4 22-14 26-26z" />
+			<circle cx="40" cy="32" r="6" fill="#ffecb3" />
+		</svg>
+		<svg class="f2" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+			<ellipse cx="40" cy="40" rx="28" ry="18" fill="#ffccbc" transform="rotate(-20 40 40)" />
+			<ellipse cx="40" cy="40" rx="28" ry="18" fill="#f48fb1" transform="rotate(35 40 40)" />
+			<ellipse cx="40" cy="40" rx="28" ry="18" fill="#fff9c4" transform="rotate(75 40 40)" />
+		</svg>
+		<svg class="f3" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+			<path fill="#e1bee7" d="M40 6l8 24 24 8-24 8-8 24-8-24-24-8 24-8z" />
+		</svg>
+		<svg class="f4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+			<circle cx="50" cy="35" r="18" fill="#ffcdd2" />
+			<circle cx="35" cy="55" r="16" fill="#f8bbd9" />
+			<circle cx="65" cy="55" r="16" fill="#fff59d" />
+			<circle cx="50" cy="68" r="14" fill="#c5e1a5" />
+		</svg>
+		<svg class="heart" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+			<path fill="#f48fb1" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+		</svg>
+		<svg class="heart2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+			<path fill="#ff8a65" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+		</svg>
+	</div>
+
+	<div class="wrap">
+		<h1 class="page-title">오늘의 특별한 룰렛</h1>
+		<p class="page-sub"><em>행운</em>을 돌려보세요<br />당신을 위한 순간이에요</p>
+
+		<div class="card">
+			<div class="wheel-section">
+				<div class="pointer-pin" aria-hidden="true">
+					<svg viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg">
+						<path
+							d="M24 4C14.6 4 7 11.4 7 20.5c0 12.2 14.8 27.8 16.5 29.6.4.4 1 .7 1.5.7s1.1-.3 1.5-.7C28.2 48.3 41 32.7 41 20.5 41 11.4 33.4 4 24 4z"
+							fill="#e91e63"
+							stroke="#880e4f"
+							stroke-width="1.2"
+						/>
+						<circle cx="24" cy="20" r="6.5" fill="#fff" opacity="0.95" />
+					</svg>
+				</div>
+				<div class="wheel-outer">
+					<div class="wheel" id="wheel" role="img" aria-label="룰렛">
+						<div class="wheel-rim-lights"></div>
+					</div>
+					<div class="wheel-center-fixed" aria-hidden="true">
+						<span class="hub-line1">FOR YOU</span>
+						<span class="hub-line2">LOVE</span>
+					</div>
+					<div class="free-bubble" aria-hidden="true">
+						<span class="free-bubble__label">행운 한 스푼</span>
+						<span class="free-bubble__tail"></span>
+					</div>
+				</div>
+			</div>
+			<button type="button" class="btn-participate" id="btnSpin">룰렛 돌리기</button>
+			<p class="notice">이 페이지는 프로포즈 연출용입니다.</p>
+		</div>
+	</div>
+
+	<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+		<div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
+		<div class="modal" id="modal">
+			<h2 id="modalTitle"></h2>
+			<p class="sub" id="modalSub"></p>
+			<div id="modalBody"></div>
+			<button type="button" class="btn-close is-hidden" id="btnClose">닫기</button>
+		</div>
+	</div>
+
+	<div class="accept-panel" id="acceptPanel" role="dialog" aria-modal="true" aria-hidden="true">
+		<h3 id="acceptTitle">3초 뒤에 자동 수락됩니다.</h3>
+		<div class="accept-count" id="acceptCount">3</div>
+		<div class="accept-btns">
+			<button type="button" class="btn-yes" id="btnAcceptYes">수락</button>
+			<button type="button" class="btn-no" id="btnAcceptNo">거절</button>
+		</div>
+	</div>
+
+	<script>
+		(function () {
+			var PRIZES = [
+				{
+					id: "p3000",
+					wheelText: "GS25 모바일\n상품권 3천원",
+					full: "GS25 모바일 상품권 3천원",
+					amount: "3,000원",
+					barcode: "8801234567890",
+					voucherImage: "../event/vouchers/gift-3000.png"
+				},
+				{
+					id: "p5000",
+					wheelText: "GS25 모바일\n상품권 5천원",
+					full: "GS25 모바일 상품권 5천원",
+					amount: "5,000원",
+					barcode: "8801234567891",
+					voucherImage: "../event/vouchers/gift-5000.png"
+				},
+				{
+					id: "p10000",
+					wheelText: "GS25 모바일\n상품권 1만원",
+					full: "GS25 모바일 상품권 1만원",
+					amount: "10,000원",
+					barcode: "8801234567892",
+					voucherImage: "../event/vouchers/gift-10000.png"
+				},
+				{
+					id: "p30000",
+					wheelText: "GS25 모바일\n상품권 3만원",
+					full: "GS25 모바일 상품권 3만원",
+					amount: "30,000원",
+					barcode: "8801234567893",
+					voucherImage: "../event/vouchers/gift-30000.png"
+				},
+				{ id: "lose", wheelText: "꽝", full: "꽝", lose: true }
+			];
+
+			var PROPOSE_TEXT = "나검의\n프로포즈";
+			var MAIN_LETTER =
+				"바른 사람으로 자라줘서 고마워. 80년 뒤쯤 헤어져줄게, 지금은 나랑 결혼할래?";
+			var FINAL_MSG = "결혼에 수락하셨습니다. 신부를 마주보고 진실을 전하세요";
+
+			var SLICE = 360 / PRIZES.length;
+			var wheel = document.getElementById("wheel");
+			var btnSpin = document.getElementById("btnSpin");
+			var overlay = document.getElementById("overlay");
+			var fxLayer = document.getElementById("fxLayer");
+			var modal = document.getElementById("modal");
+			var modalTitle = document.getElementById("modalTitle");
+			var modalSub = document.getElementById("modalSub");
+			var modalBody = document.getElementById("modalBody");
+			var btnClose = document.getElementById("btnClose");
+			var acceptPanel = document.getElementById("acceptPanel");
+			var acceptCount = document.getElementById("acceptCount");
+			var btnAcceptYes = document.getElementById("btnAcceptYes");
+			var btnAcceptNo = document.getElementById("btnAcceptNo");
+
+			var rotation = 0;
+			var spinning = false;
+			var sliceLabelEls = [];
+			var countdownTimer = null;
+			var alertDelayTimer = null;
+
+			function placeRimBulbs() {
+				var rim = document.querySelector(".wheel-rim-lights");
+				if (!rim || !wheel) return;
+				var existing = rim.querySelectorAll(".rim-bulb-dot");
+				for (var e = 0; e < existing.length; e++) {
+					rim.removeChild(existing[e]);
+				}
+				var w = rim.offsetWidth;
+				var h = rim.offsetHeight;
+				if (w < 24 || h < 24) return;
+				var cx = w / 2;
+				var cy = h / 2;
+				var outerR = Math.min(w, h) / 2;
+				var rMid = outerR - 6;
+				var count = 15;
+				for (var i = 0; i < count; i++) {
+					var ang = (i / count) * Math.PI * 2 - Math.PI / 2;
+					var dot = document.createElement("span");
+					dot.className = "rim-bulb-dot";
+					dot.setAttribute("aria-hidden", "true");
+					dot.style.left = cx + rMid * Math.cos(ang) + "px";
+					dot.style.top = cy + rMid * Math.sin(ang) + "px";
+					rim.appendChild(dot);
+				}
+			}
+
+			function placeLabels() {
+				sliceLabelEls = [];
+				for (var i = 0; i < PRIZES.length; i++) {
+					var deg = i * SLICE + SLICE / 2;
+					var el = document.createElement("div");
+					var id = PRIZES[i].id;
+					var accent =
+						!PRIZES[i].lose && (id === "p3000" || id === "p10000") ? " accent-blue" : "";
+					el.className = "slice-label" + (PRIZES[i].lose ? " gray" : "") + accent;
+					el.textContent = PRIZES[i].wheelText;
+					el.style.transform =
+						"translate(-50%, -50%) rotate(" +
+						deg +
+						"deg) translateY(calc(-31cqw))";
+					wheel.appendChild(el);
+					sliceLabelEls.push(el);
+				}
+			}
+
+			function clearTimers() {
+				if (countdownTimer) {
+					clearInterval(countdownTimer);
+					countdownTimer = null;
+				}
+				if (alertDelayTimer) {
+					clearTimeout(alertDelayTimer);
+					alertDelayTimer = null;
+				}
+			}
+
+			function spawnFx() {
+				fxLayer.innerHTML = "";
+				var colors = ["#f48fb1", "#ffeb3b", "#fff176", "#ce93d8", "#81d4fa", "#a5d6a7", "#ffab91"];
+				for (var i = 0; i < 48; i++) {
+					var c = document.createElement("div");
+					c.className = "confetti";
+					c.style.left = Math.random() * 100 + "%";
+					c.style.background = colors[i % colors.length];
+					c.style.animationDuration = 2.5 + Math.random() * 2.5 + "s";
+					c.style.animationDelay = Math.random() * 0.8 + "s";
+					fxLayer.appendChild(c);
+				}
+				for (var p = 0; p < 14; p++) {
+					var pet = document.createElement("div");
+					pet.className = "petal";
+					pet.style.left = Math.random() * 100 + "%";
+					pet.style.animationDuration = 4 + Math.random() * 3 + "s";
+					pet.style.animationDelay = Math.random() * 1.2 + "s";
+					fxLayer.appendChild(pet);
+				}
+			}
+
+			function showLoseModal() {
+				clearTimers();
+				acceptPanel.classList.remove("show");
+				acceptPanel.setAttribute("aria-hidden", "true");
+				modal.classList.add("modal-lose");
+				modalTitle.textContent = "아쉬워요";
+				modalSub.textContent = "다음에 다시 도전해요.";
+				modalBody.innerHTML =
+					'<p style="color:#6d4c41;font-weight:600;">꽝이에요. 하지만 마음은 전해졌을 거예요 💕</p>';
+				btnClose.classList.remove("is-hidden");
+				fxLayer.innerHTML = "";
+				requestAnimationFrame(function () {
+					overlay.classList.add("show");
+				});
+			}
+
+			function revealWinningSlice(winIndex) {
+				var el = sliceLabelEls[winIndex];
+				if (!el || PRIZES[winIndex].lose) return;
+				el.textContent = PROPOSE_TEXT;
+				el.classList.remove("accent-blue");
+				el.classList.add("propose-reveal");
+			}
+
+			function showPhase1Propose() {
+				modal.classList.remove("modal-lose");
+				modalTitle.textContent = "🎉 축하해요 🎉";
+				modalSub.textContent = "";
+				modalBody.innerHTML = '<p class="propose-main-msg">' + MAIN_LETTER + "</p>";
+				btnClose.classList.add("is-hidden");
+				spawnFx();
+				requestAnimationFrame(function () {
+					requestAnimationFrame(function () {
+						overlay.classList.add("show");
+					});
+				});
+			}
+
+			function runCountdownAndAccept() {
+				var n = 3;
+				acceptCount.textContent = String(n);
+				countdownTimer = setInterval(function () {
+					n -= 1;
+					if (n > 0) {
+						acceptCount.textContent = String(n);
+					} else {
+						acceptCount.textContent = "♥";
+						clearInterval(countdownTimer);
+						countdownTimer = null;
+						finishAccept();
+					}
+				}, 1000);
+			}
+
+			function finishAccept() {
+				acceptPanel.classList.remove("show");
+				acceptPanel.setAttribute("aria-hidden", "true");
+				modalTitle.textContent = "💍";
+				modalSub.textContent = "";
+				modalBody.innerHTML = '<p class="final-msg">' + FINAL_MSG + "</p>";
+				btnClose.classList.remove("is-hidden");
+			}
+
+			function openAcceptPanel() {
+				acceptPanel.setAttribute("aria-hidden", "false");
+				acceptPanel.classList.add("show");
+				acceptCount.textContent = "3";
+				runCountdownAndAccept();
+			}
+
+			function showProposeWin(winIndex) {
+				revealWinningSlice(winIndex);
+				showPhase1Propose();
+				alertDelayTimer = setTimeout(function () {
+					alertDelayTimer = null;
+					openAcceptPanel();
+				}, 2000);
+			}
+
+			btnAcceptYes.addEventListener("click", function () {
+				if (countdownTimer) {
+					clearInterval(countdownTimer);
+					countdownTimer = null;
+				}
+				finishAccept();
+			});
+
+			btnAcceptNo.addEventListener("click", function () {
+				alert("거절은… 없답니다 💕 (카운트는 계속 돼요)");
+			});
+
+			btnClose.addEventListener("click", function () {
+				overlay.classList.remove("show");
+				clearTimers();
+				acceptPanel.classList.remove("show");
+				acceptPanel.setAttribute("aria-hidden", "true");
+				fxLayer.innerHTML = "";
+			});
+
+			overlay.addEventListener("click", function (e) {
+				if (e.target === overlay && btnClose.classList.contains("is-hidden") === false) {
+					overlay.classList.remove("show");
+					clearTimers();
+					acceptPanel.classList.remove("show");
+					acceptPanel.setAttribute("aria-hidden", "true");
+					fxLayer.innerHTML = "";
+				}
+			});
+
+			btnSpin.addEventListener("click", function () {
+				if (spinning) return;
+				spinning = true;
+				btnSpin.disabled = true;
+
+				var winIndex = Math.floor(Math.random() * PRIZES.length);
+				var centerDeg = winIndex * SLICE + SLICE / 2;
+				var neededRem = (360 - (centerDeg % 360)) % 360;
+				var currentRem = ((rotation % 360) + 360) % 360;
+				var deltaRem = (neededRem - currentRem + 360) % 360;
+				if (deltaRem === 0) deltaRem = 360;
+				var fullSpins = 360 * (6 + Math.floor(Math.random() * 3));
+				rotation = rotation + fullSpins + deltaRem;
+
+				wheel.style.transform = "rotate(" + rotation + "deg)";
+
+				setTimeout(function () {
+					spinning = false;
+					btnSpin.disabled = false;
+					if (PRIZES[winIndex].lose) {
+						showLoseModal();
+					} else {
+						showProposeWin(winIndex);
+					}
+				}, 4600);
+			});
+
+			placeLabels();
+			placeRimBulbs();
+			requestAnimationFrame(function () {
+				requestAnimationFrame(placeRimBulbs);
+			});
+			window.addEventListener("resize", placeRimBulbs);
+		})();
+	</script>
+</body>
+</html>

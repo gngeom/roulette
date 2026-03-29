@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="description" content="GS 편의점 럭키 룰렛 — 모바일 상품권 즉석 당첨 이벤트" />
+	<title>GS 편의점 럭키 룰렛 이벤트</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<style>
+		:root {
+			--gs-blue: #0072bc;
+			--gs-cyan: #33badf;
+			--gs-blue-dark: #005a96;
+			--bg-page: #e3f2fb;
+			--text-dark: #1a2d3d;
+			--card: #fff;
+			--shadow: 0 12px 40px rgba(0, 82, 140, 0.15);
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			font-family: "Noto Sans KR", system-ui, sans-serif;
+			min-height: 100vh;
+			color: var(--text-dark);
+			background: linear-gradient(180deg, #e8f4fc 0%, #c9dff0 45%, #a8c9e0 100%);
+			overflow-x: hidden;
+		}
+
+		.event-strip {
+			background: linear-gradient(90deg, var(--gs-blue-dark) 0%, var(--gs-blue) 40%, var(--gs-cyan) 100%);
+			color: #fff;
+			text-align: center;
+			padding: 12px 16px;
+			font-size: 13px;
+			font-weight: 700;
+			letter-spacing: 0.03em;
+			box-shadow: 0 2px 10px rgba(0, 82, 140, 0.22);
+		}
+
+		.wrap {
+			max-width: 440px;
+			margin: 0 auto;
+			padding: 24px 18px 48px;
+		}
+
+		.logo-area {
+			text-align: center;
+			margin-bottom: 6px;
+			padding: 4px 0 0;
+		}
+
+		/* PNG 로고 흰 배경을 페이지 그라데이션과 섞어 눈에 덜 띄게 */
+		.logo-area img {
+			display: block;
+			max-width: min(200px, 70vw);
+			height: auto;
+			margin: 0 auto;
+			mix-blend-mode: multiply;
+		}
+
+		.badge {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			width: fit-content;
+			max-width: 100%;
+			background: linear-gradient(135deg, #fff9c4 0%, #ffeb3b 100%);
+			color: #5d4037;
+			font-size: 12px;
+			font-weight: 800;
+			padding: 6px 14px;
+			border-radius: 999px;
+			margin: 20px auto 0;
+			box-shadow: 0 2px 8px rgba(255, 193, 7, 0.35);
+		}
+
+		h1 {
+			font-size: clamp(1.35rem, 4.5vw, 1.65rem);
+			font-weight: 900;
+			text-align: center;
+			line-height: 1.35;
+			margin: 18px 0 8px;
+			color: #0c2847;
+		}
+
+		.lead {
+			text-align: center;
+			font-size: 0.95rem;
+			line-height: 1.65;
+			color: #040404;
+			margin-bottom: 22px;
+		}
+
+		.lead strong {
+			color: var(--gs-blue-dark);
+		}
+
+		.features {
+			list-style: none;
+			margin: 0 0 24px;
+			padding: 0 4px;
+		}
+
+		.features li {
+			display: flex;
+			align-items: flex-start;
+			gap: 10px;
+			font-size: 0.9rem;
+			line-height: 1.55;
+			margin-bottom: 10px;
+			color: #455a64;
+		}
+
+		.features li::before {
+			content: "🎯";
+			flex-shrink: 0;
+			font-size: 1.1rem;
+		}
+
+		.qr-card {
+			background: var(--card);
+			border-radius: 20px;
+			padding: 22px 18px 20px;
+			box-shadow: var(--shadow);
+			text-align: center;
+			margin-bottom: 20px;
+			border: 1px solid rgba(0, 114, 188, 0.12);
+		}
+
+		.qr-card h2 {
+			font-size: 1rem;
+			font-weight: 800;
+			color: var(--gs-blue-dark);
+			margin-bottom: 6px;
+		}
+
+		.qr-card p {
+			font-size: 0.82rem;
+			color: #607d8b;
+			line-height: 1.5;
+			margin-bottom: 16px;
+		}
+
+		#qrcode {
+			display: inline-block;
+			padding: 12px;
+			background: #fff;
+			border-radius: 12px;
+			border: 2px dashed rgba(0, 114, 188, 0.25);
+		}
+
+		#qrcode img {
+			display: block;
+		}
+
+		.url-hint {
+			margin-top: 14px;
+			font-size: 11px;
+			color: #78909c;
+			word-break: break-all;
+			line-height: 1.45;
+			padding: 0 4px;
+		}
+
+		.btn-primary {
+			display: block;
+			width: 100%;
+			text-align: center;
+			text-decoration: none;
+			font-size: 1rem;
+			font-weight: 800;
+			color: #fff;
+			padding: 16px 20px;
+			border-radius: 14px;
+			border: none;
+			cursor: pointer;
+			background: linear-gradient(90deg, var(--gs-blue-dark) 0%, var(--gs-blue) 50%, var(--gs-cyan) 100%);
+			box-shadow: 0 6px 20px rgba(0, 90, 150, 0.35);
+			transition: transform 0.15s ease, box-shadow 0.15s ease;
+		}
+
+		.btn-primary:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 8px 26px rgba(0, 90, 150, 0.42);
+		}
+
+		.btn-primary:active {
+			transform: translateY(0);
+		}
+
+		.note {
+			margin-top: 18px;
+			font-size: 11px;
+			color: #78909c;
+			text-align: center;
+			line-height: 1.55;
+		}
+
+		/*
+		 * 인쇄(Chrome): 화면에서는 mix-blend-mode: multiply로 흰 PNG가 배경과 섞이지만,
+		 * 인쇄/PDF 파이프라인은 블렌드를 무시하거나 이미지를 불투명 박스로 찍어 흰 사각형이 생김.
+		 * - 배경·그라데이션도 출력되게 print-color-adjust
+		 * - 로고 뒤에 페이지 상단과 동일 톤의 단색을 깔고 darken으로 흰 픽셀을 배경색에 가깝게
+		 */
+		/* 인쇄 시 용지 여백 축소 → 세로 길이 단축 */
+		@page {
+			margin: 7mm 10mm;
+		}
+
+		@media print {
+			/*
+			 * 가로로 늘리지 않음: 좁은 단(max-width) + 가운데 정렬
+			 * 세로 비율 유지: 블록 순서·크기 비슷하게, 자간·행간·여백만 촘촘히
+			 */
+			html,
+			body {
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+
+			body {
+				background: #e8f4fc !important;
+				min-height: 0 !important;
+				letter-spacing: -0.018em;
+				word-spacing: -0.02em;
+			}
+
+			.event-strip {
+				max-width: 288px;
+				margin-left: auto;
+				margin-right: auto;
+				padding: 5px 10px !important;
+				font-size: 9.5px !important;
+				letter-spacing: -0.02em !important;
+				line-height: 1.32 !important;
+				border-radius: 0 0 8px 8px;
+				box-sizing: border-box;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+
+			.wrap {
+				max-width: 288px !important;
+				width: 100%;
+				margin-left: auto !important;
+				margin-right: auto !important;
+				padding: 6px 8px 11px !important;
+				box-sizing: border-box;
+			}
+
+			.logo-area {
+				width: fit-content;
+				margin-left: auto;
+				margin-right: auto;
+				margin-bottom: 3px;
+				padding: 4px 9px 5px;
+				border-radius: 8px;
+				background: linear-gradient(180deg, #e8f4fc 0%, #d4e8f4 100%);
+			}
+
+			.logo-area img {
+				max-width: 114px !important;
+				mix-blend-mode: darken;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+
+			.badge {
+				margin-top: 6px !important;
+				margin-bottom: 0 !important;
+				padding: 3px 11px !important;
+				font-size: 9px !important;
+				letter-spacing: -0.025em !important;
+				line-height: 1.28 !important;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+
+			h1 {
+				font-size: 0.95rem !important;
+				letter-spacing: -0.022em !important;
+				margin: 6px 0 4px !important;
+				line-height: 1.22 !important;
+			}
+
+			.lead {
+				font-size: 0.74rem !important;
+				letter-spacing: -0.018em !important;
+				line-height: 1.36 !important;
+				margin-bottom: 7px !important;
+			}
+
+			.features {
+				margin-bottom: 7px !important;
+				padding: 0 1px !important;
+			}
+
+			.features li {
+				font-size: 0.7rem !important;
+				letter-spacing: -0.015em !important;
+				line-height: 1.3 !important;
+				margin-bottom: 3px !important;
+				gap: 5px;
+			}
+
+			.features li::before {
+				font-size: 0.8rem;
+			}
+
+			.qr-card {
+				padding: 7px 10px 6px !important;
+				margin-bottom: 7px !important;
+				border-radius: 10px !important;
+			}
+
+			.qr-card h2 {
+				font-size: 0.77rem !important;
+				letter-spacing: -0.02em !important;
+				margin-bottom: 2px !important;
+				line-height: 1.28 !important;
+			}
+
+			.qr-card p {
+				font-size: 0.66rem !important;
+				letter-spacing: -0.015em !important;
+				margin-bottom: 4px !important;
+				line-height: 1.3 !important;
+			}
+
+			#qrcode {
+				padding: 5px !important;
+				line-height: 0;
+				transform: scale(0.6);
+				transform-origin: center center;
+				margin: -17px auto -17px;
+			}
+
+			.url-hint {
+				margin-top: 4px !important;
+				font-size: 7.5px !important;
+				letter-spacing: -0.02em !important;
+				line-height: 1.3 !important;
+			}
+
+			.btn-primary {
+				padding: 8px 12px !important;
+				font-size: 0.75rem !important;
+				letter-spacing: -0.02em !important;
+				line-height: 1.28 !important;
+				border-radius: 9px !important;
+				box-shadow: none !important;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+
+			.note {
+				margin-top: 6px !important;
+				font-size: 7.5px !important;
+				letter-spacing: -0.02em !important;
+				line-height: 1.34 !important;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="event-strip">🎉 GS 편의점 한정 · 모바일 상품권 럭키 룰렛 이벤트 진행 중</div>
+
+	<div class="wrap">
+		<div class="logo-area">
+			<img src="/event/gs25-logo.png" width="200" height="55" alt="GS25" />
+		</div>
+
+		<div class="badge">QR 스캔으로 바로 참여</div>
+
+		<h1>럭키 룰렛에 참여하고<br />모바일 상품권을 받아가세요</h1>
+		<p class="lead">
+			GS 편의점에서 진행하는 <strong>즉석 당첨 룰렛</strong> 이벤트입니다.<br />
+			아래 QR코드를 찍거나 버튼을 누르면 <strong>룰렛 페이지</strong>로 이동합니다.
+		</p>
+
+		<ul class="features">
+			<li>룰렛을 돌리면 GS25 모바일 상품권이 즉석에서 결정돼요.</li>
+			<li>스마트폰으로 QR만 스캔하면 별도 주소 입력 없이 이벤트 화면으로 연결돼요.</li>
+			<li>이 페이지는 룰렛 이벤트 안내 전용 랜딩입니다.</li>
+		</ul>
+
+		<div class="qr-card">
+			<h2>📱 이벤트 참여 QR</h2>
+			<p style="color: #2d3273;">카메라 앱으로 스캔하면 룰렛 페이지가 열립니다.</p>
+			<div id="qrcode" aria-label="룰렛 이벤트 QR 코드"></div>
+			<p class="url-hint" id="urlHint"></p>
+		</div>
+
+		<a class="btn-primary" id="btnGo" href="/event/roulette">룰렛 이벤트 바로 가기</a>
+
+		<p class="note">
+			※ 이벤트 기간·당첨 내역·유의사항은 룰렛 페이지 및 매장 안내를 확인해 주세요.<br />
+		</p>
+	</div>
+
+	<script>
+		(function () {
+			var roulettePath = "/event/roulette";
+			var fullUrl = window.location.origin + roulettePath;
+			var el = document.getElementById("qrcode");
+			var hint = document.getElementById("urlHint");
+			var btn = document.getElementById("btnGo");
+
+			if (hint) {
+				hint.textContent = "본 상품권은 2023.08.18 ~ 2098.08.18까지 유효합니다.";
+			}
+			if (btn) {
+				btn.setAttribute("href", roulettePath);
+			}
+
+			if (el && typeof QRCode !== "undefined") {
+				el.innerHTML = "";
+				new QRCode(el, {
+					text: fullUrl,
+					width: 200,
+					height: 200,
+					colorDark: "#005a96",
+					colorLight: "#ffffff",
+					correctLevel: QRCode.CorrectLevel.M
+				});
+			}
+		})();
+	</script>
+</body>
+</html>

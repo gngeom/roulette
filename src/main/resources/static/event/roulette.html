@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>GS25 럭키 룰렛 이벤트</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet" />
+	<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+	<style>
+		:root {
+			/* GS25 로고 기준 톤 */
+			--gs-blue: #0072bc;
+			--gs-cyan: #33badf;
+			--gs-blue-dark: #005a96;
+			/* 참고 이미지: 연한 하늘색 / 화이트 교차 조각 */
+			--slice-light: #f7fcff;
+			--slice-sky: #bfe8f5;
+			--slice-lose: #d8e6ef;
+			--rim-navy: #0c2847;
+			--bulb-yellow: #ffeb3b;
+			--pin-red: #e53935;
+			--bg-page: #e3f2fb;
+			--text-dark: #1a2d3d;
+			--label-ink: #0a2d4a;
+			--bubble-pink: #ff7eb3;
+			--bubble-pink-dark: #ff5c9d;
+			--rim-w: 12px;
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			font-family: "Noto Sans KR", sans-serif;
+			background: linear-gradient(180deg, #e8f4fc 0%, #c9dff0 45%, #a8c9e0 100%);
+			min-height: 100vh;
+			color: var(--text-dark);
+			overflow-x: hidden;
+		}
+
+		/* 상단 이벤트 배너 */
+		.event-strip {
+			background: linear-gradient(90deg, var(--gs-blue-dark) 0%, var(--gs-blue) 40%, var(--gs-cyan) 100%);
+			color: #fff;
+			text-align: center;
+			padding: 10px 16px;
+			font-size: 13px;
+			font-weight: 700;
+			letter-spacing: 0.02em;
+			box-shadow: 0 2px 8px rgba(0, 82, 140, 0.2);
+		}
+
+		.wrap {
+			max-width: 420px;
+			margin: 0 auto;
+			padding: 20px 16px 40px;
+		}
+
+		.logo-area {
+			text-align: center;
+			margin-bottom: 8px;
+			padding: 6px 0 4px;
+			border-radius: 16px;
+			/* body와 동일 그라데이션을 뷰포트에 고정 → multiply 시 흰 PNG 배경이 실제 배경과 일치 */
+			background-image: linear-gradient(180deg, #e8f4fc 0%, #c9dff0 45%, #a8c9e0 100%);
+			background-size: 100vw 100vh;
+			background-attachment: fixed;
+			background-position: 0 0;
+		}
+
+		.logo-img {
+			display: block;
+			max-width: min(220px, 72vw);
+			height: auto;
+			margin: 0 auto;
+			mix-blend-mode: multiply;
+		}
+
+		.subtitle {
+			text-align: center;
+			font-size: 15px;
+			font-weight: 700;
+			color: #444;
+			margin-top: 12px;
+			line-height: 1.5;
+		}
+
+		.subtitle em {
+			color: var(--gs-blue);
+			font-style: normal;
+		}
+
+		.card {
+			background: #fff;
+			border-radius: 20px;
+			padding: 24px 18px 28px;
+			margin-top: 20px;
+			box-shadow: 0 8px 32px rgba(0, 114, 188, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+			border: 3px solid #9fd8ef;
+		}
+
+		.wheel-section {
+			position: relative;
+			width: min(100%, 320px);
+			aspect-ratio: 1;
+			margin: 0 auto 20px;
+			container-type: size;
+			--bubble-lift: clamp(39px, 8cqw, 66px);
+		}
+
+		/* 참고: 상단 빨간 핀(지도 마커)형 포인터 — 룰렛과 별도 고정 */
+		.pointer-pin {
+			position: absolute;
+			left: 50%;
+			top: -8px;
+			transform: translateX(-50%);
+			z-index: 12;
+			width: 36px;
+			height: 44px;
+			filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+		}
+
+		.pointer-pin svg {
+			display: block;
+			width: 100%;
+			height: 100%;
+		}
+
+		.wheel-outer {
+			position: absolute;
+			inset: 14px;
+			border-radius: 50%;
+			background: transparent;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			/* filter는 자식(음수 inset)이 잘리는 경우가 있어 그림자는 .wheel에 box-shadow로 처리 */
+		}
+
+		/* 룰렛 원 중심(허브) 기준: 가로 중앙 정렬 + 위쪽 배치, 꼬리는 아래로 허브를 향함 */
+		.free-bubble {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, calc(-50% - var(--bubble-lift, 56px)));
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			z-index: 11;
+			pointer-events: none;
+			filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.18));
+		}
+
+		.free-bubble__label {
+			display: block;
+			background: linear-gradient(180deg, var(--bubble-pink) 0%, var(--bubble-pink-dark) 100%);
+			color: #fff;
+			font-size: clamp(10px, 2.8vw, 12px);
+			font-weight: 900;
+			letter-spacing: -0.03em;
+			padding: 7px 11px 8px;
+			border-radius: 14px;
+			border: 2px solid rgba(255, 255, 255, 0.55);
+			white-space: nowrap;
+			line-height: 1;
+		}
+
+		.free-bubble__tail {
+			width: 0;
+			height: 0;
+			border-left: 9px solid transparent;
+			border-right: 9px solid transparent;
+			border-top: 11px solid var(--bubble-pink-dark);
+			margin-top: -1px;
+		}
+
+		.wheel {
+			position: absolute;
+			inset: 0;
+			border-radius: 50%;
+			box-sizing: border-box;
+			border: 12px solid var(--rim-navy);
+			overflow: visible;
+			container-type: size;
+			background: conic-gradient(
+				var(--slice-light) 0deg 72deg,
+				var(--slice-sky) 72deg 144deg,
+				var(--slice-light) 144deg 216deg,
+				var(--slice-sky) 216deg 288deg,
+				var(--slice-lose) 288deg 360deg
+			);
+			background-clip: padding-box;
+			transition: transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+			box-shadow:
+				0 6px 18px rgba(12, 40, 71, 0.22),
+				inset 0 0 0 3px rgba(255, 255, 255, 0.75);
+		}
+
+		/* 네이비 링 위 동그란 노란 전구 — 점은 JS로 배치 (.rim-bulb-dot) */
+		.wheel-rim-lights {
+			position: absolute;
+			inset: -12px;
+			border-radius: 50%;
+			pointer-events: none;
+			z-index: 5;
+		}
+
+		.rim-bulb-dot {
+			position: absolute;
+			width: 8px;
+			height: 8px;
+			margin: 0;
+			padding: 0;
+			border-radius: 50%;
+			background: radial-gradient(circle at 32% 28%, #fff9c4 0%, #ffeb3b 45%, #fbc02d 100%);
+			box-shadow:
+				0 1px 2px rgba(12, 40, 71, 0.35),
+				inset 0 1px 1px rgba(255, 255, 255, 0.65);
+			transform: translate(-50%, -50%);
+		}
+
+		/* 회전하지 않는 중앙 허브 (네이비 + 흰 글자) */
+		.wheel-center-fixed {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			width: 24%;
+			min-width: 58px;
+			aspect-ratio: 1;
+			background: linear-gradient(165deg, var(--gs-blue) 0%, var(--rim-navy) 100%);
+			border-radius: 50%;
+			border: 3px solid rgba(255, 255, 255, 0.9);
+			box-shadow: 0 4px 16px rgba(12, 40, 71, 0.35);
+			z-index: 9;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			line-height: 1.05;
+			pointer-events: none;
+			color: #fff;
+			padding: 4px;
+		}
+
+		.wheel-center-fixed .hub-line1 {
+			font-size: clamp(7px, 1.9vw, 9px);
+			font-weight: 700;
+			opacity: 0.95;
+			letter-spacing: -0.02em;
+		}
+
+		.wheel-center-fixed .hub-line2 {
+			font-size: clamp(11px, 3.2vw, 14px);
+			font-weight: 900;
+			letter-spacing: 0.08em;
+			margin-top: 2px;
+		}
+
+		/* 당첨 문구: 룰렛 중심 기준으로 조각 접선 방향(돌 때 같이 기울어짐) — 마지막 역회전 없음 */
+		.slice-label {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			width: 40%;
+			max-width: 120px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			font-size: clamp(8px, 6vw, 14.3px);
+			font-weight: 800;
+			color: var(--label-ink);
+			text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+			line-height: 1.2;
+			pointer-events: none;
+			transform-origin: center center;
+			white-space: pre-line;
+			word-break: keep-all;
+			hyphens: none;
+			min-height: 2.6em;
+			z-index: 2;
+		}
+
+		.slice-label.gray {
+			color: #1e3d55;
+			font-size: 6vw;
+			text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+		}
+
+		/* p3000, p10000 룰렛 칸 문구 */
+		.slice-label.accent-blue {
+			color: #1478c1;
+			text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+		}
+
+
+		.btn-participate {
+			display: block;
+			width: 100%;
+			max-width: 280px;
+			margin: 0 auto;
+			padding: 16px 24px;
+			font-family: inherit;
+			font-size: 18px;
+			font-weight: 900;
+			color: #fff;
+			background: linear-gradient(180deg, var(--gs-cyan) 0%, var(--gs-blue) 100%);
+			border: none;
+			border-radius: 999px;
+			cursor: pointer;
+			box-shadow: 0 4px 0 var(--gs-blue-dark), 0 10px 28px rgba(0, 114, 188, 0.35);
+			transition: transform 0.08s ease, box-shadow 0.08s ease;
+		}
+
+		.btn-participate:hover:not(:disabled) {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 0 var(--gs-blue-dark), 0 14px 32px rgba(0, 114, 188, 0.4);
+		}
+
+		.btn-participate:active:not(:disabled) {
+			transform: translateY(2px);
+			box-shadow: 0 2px 0 var(--gs-blue-dark), 0 4px 16px rgba(0, 114, 188, 0.3);
+		}
+
+		.btn-participate:disabled {
+			opacity: 0.65;
+			cursor: not-allowed;
+			box-shadow: 0 2px 0 #7a8a99;
+		}
+
+		.notice {
+			margin-top: 16px;
+			font-size: 11px;
+			color: #666;
+			text-align: center;
+			line-height: 1.6;
+		}
+
+		/* 결과 모달 */
+		.overlay {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.55);
+			z-index: 100;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+			backdrop-filter: blur(4px);
+		}
+
+		.overlay.show {
+			display: flex;
+		}
+
+		.modal {
+			background: #fff;
+			border-radius: 24px;
+			padding: 28px 22px 24px;
+			max-width: 360px;
+			width: 100%;
+			text-align: center;
+			box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+			border: 4px solid #b8e4f5;
+			/* 애니메이션은 .overlay.show 일 때만 — 중복/이중 모션 방지 */
+			transform: translateZ(0);
+		}
+
+		.overlay.show .modal {
+			animation: modalReveal 0.28s ease-out both;
+		}
+
+		@keyframes modalReveal {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.modal h2 {
+			font-size: 22px;
+			font-weight: 900;
+			color: var(--gs-blue);
+			margin-bottom: 8px;
+		}
+
+		.modal .sub {
+			font-size: 14px;
+			color: #555;
+			margin-bottom: 20px;
+		}
+
+		.voucher {
+			background: linear-gradient(135deg, #f5f9fc 0%, #e8f2fa 100%);
+			border-radius: 16px;
+			padding: 16px 12px 18px;
+			margin-bottom: 16px;
+			border: 2px dashed var(--gs-blue);
+			box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+		}
+
+		/* 상품권 이미지 영역: 로드 전에도 높이 고정 → 모달 크기 튐(두 번 뜨는 느낌) 방지 */
+		.voucher-img-wrap {
+			width: 100%;
+			max-width: 320px;
+			margin: 0 auto 12px;
+			aspect-ratio: 360 / 200;
+			max-height: 200px;
+			background: #eef4f9;
+			border-radius: 12px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+			box-shadow: 0 4px 16px rgba(12, 40, 71, 0.1);
+		}
+
+		.voucher-card-img {
+			display: block;
+			width: 100%;
+			height: 100%;
+			max-height: 200px;
+			object-fit: contain;
+			border-radius: 8px;
+			background: transparent;
+		}
+
+		.voucher-hint {
+			font-size: 12px;
+			font-weight: 700;
+			color: #555;
+			margin-bottom: 10px;
+			line-height: 1.4;
+		}
+
+		.barcode-wrap {
+			background: #fff;
+			padding: 12px;
+			border-radius: 8px;
+			margin-top: 0;
+		}
+
+		.barcode-wrap svg {
+			max-width: 100%;
+			height: auto;
+		}
+
+		/* 바코드 아래 숫자 — 페이지 본문과 동일 글꼴 */
+		.barcode-wrap svg text {
+			font-family: "Noto Sans KR", sans-serif !important;
+		}
+
+		.modal-lose .voucher {
+			background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+			border-color: #bbb;
+		}
+
+		.modal-lose h2 {
+			color: #454343;
+		}
+
+		.btn-close {
+			margin-top: 8px;
+			padding: 12px 32px;
+			font-family: inherit;
+			font-size: 15px;
+			font-weight: 700;
+			color: #fff;
+			background: var(--gs-blue);
+			border: none;
+			border-radius: 999px;
+			cursor: pointer;
+			box-shadow: 0 3px 0 var(--gs-blue-dark);
+		}
+
+		.btn-close:active {
+			transform: translateY(2px);
+			box-shadow: none;
+		}
+	</style>
+</head>
+<body>
+	<div class="event-strip">🎉 한정 수량 GS25 모바일 상품권 즉석 당첨! 지금 바로 룰렛을 돌려보세요 🎉</div>
+
+	<div class="wrap">
+		<div class="logo-area">
+			<img class="logo-img" src="/event/gs25-logo.png" width="440" height="120" alt="GS25" />
+		</div>
+		<p class="subtitle">
+			<em>럭키 룰렛</em>에 참여하고<br />모바일 상품권을 받아가세요!
+		</p>
+
+		<div class="card">
+			<div class="wheel-section">
+				<div class="pointer-pin" aria-hidden="true">
+					<svg viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg">
+						<path
+							d="M24 4C14.6 4 7 11.4 7 20.5c0 12.2 14.8 27.8 16.5 29.6.4.4 1 .7 1.5.7s1.1-.3 1.5-.7C28.2 48.3 41 32.7 41 20.5 41 11.4 33.4 4 24 4z"
+							fill="#e53935"
+							stroke="#b71c1c"
+							stroke-width="1.2"
+						/>
+						<circle cx="24" cy="20" r="6.5" fill="#fff" opacity="0.95" />
+					</svg>
+				</div>
+				<div class="wheel-outer">
+					<div class="wheel" id="wheel" role="img" aria-label="경품 룰렛">
+						<div class="wheel-rim-lights"></div>
+					</div>
+					<div class="wheel-center-fixed" aria-hidden="true">
+						<span class="hub-line1">룰렛을 돌려라!</span>
+						<span class="hub-line2">EVENT</span>
+					</div>
+					<div class="free-bubble" aria-hidden="true">
+						<span class="free-bubble__label">무료 1회</span>
+						<span class="free-bubble__tail"></span>
+					</div>
+				</div>
+			</div>
+			<button type="button" class="btn-participate" id="btnSpin">이벤트 참여</button>
+			<p class="notice">
+				본 상품권은 2023.02.14 ~ 2058.02.14까지 유효합니다.<br />
+				당첨 결과는 당첨자 모바일 SMS로 전송됩니다.
+			</p>
+		</div>
+	</div>
+
+	<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+		<div class="modal" id="modal">
+			<h2 id="modalTitle"></h2>
+			<p class="sub" id="modalSub"></p>
+			<div id="modalBody"></div>
+			<button type="button" class="btn-close" id="btnClose">확인</button>
+		</div>
+	</div>
+
+	<script>
+		(function () {
+			var PRIZES = [
+				{
+					id: "p3000",
+					wheelText: "GS25 모바일\n상품권 3천원",
+					full: "GS25 모바일 상품권 3천원",
+					amount: "3,000원",
+					barcode: "8801234567890",
+					voucherImage: "/event/vouchers/gift-3000.png"
+				},
+				{
+					id: "p5000",
+					wheelText: "GS25 모바일\n상품권 5천원",
+					full: "GS25 모바일 상품권 5천원",
+					amount: "5,000원",
+					barcode: "8801234567891",
+					voucherImage: "/event/vouchers/gift-5000.png"
+				},
+				{
+					id: "p10000",
+					wheelText: "GS25 모바일\n상품권 1만원",
+					full: "GS25 모바일 상품권 1만원",
+					amount: "10,000원",
+					barcode: "8801234567892",
+					voucherImage: "/event/vouchers/gift-10000.png"
+				},
+				{
+					id: "p30000",
+					wheelText: "GS25 모바일\n상품권 3만원",
+					full: "GS25 모바일 상품권 3만원",
+					amount: "30,000원",
+					barcode: "8801234567893",
+					voucherImage: "/event/vouchers/gift-30000.png"
+				},
+				{ id: "lose", wheelText: "꽝", full: "꽝", lose: true }
+			];
+
+			var SLICE = 360 / PRIZES.length;
+			var wheel = document.getElementById("wheel");
+			var btnSpin = document.getElementById("btnSpin");
+			var overlay = document.getElementById("overlay");
+			var modal = document.getElementById("modal");
+			var modalTitle = document.getElementById("modalTitle");
+			var modalSub = document.getElementById("modalSub");
+			var modalBody = document.getElementById("modalBody");
+			var btnClose = document.getElementById("btnClose");
+
+			var rotation = 0;
+			var spinning = false;
+
+			/* 네이비 링 한가운데 둘레를 따라 동그란 노란 점 (conic 막대 X) */
+			function placeRimBulbs() {
+				var rim = document.querySelector(".wheel-rim-lights");
+				if (!rim || !wheel) return;
+				var existing = rim.querySelectorAll(".rim-bulb-dot");
+				for (var e = 0; e < existing.length; e++) {
+					rim.removeChild(existing[e]);
+				}
+				var w = rim.offsetWidth;
+				var h = rim.offsetHeight;
+				if (w < 24 || h < 24) return;
+				var cx = w / 2;
+				var cy = h / 2;
+				var outerR = Math.min(w, h) / 2;
+				var rMid = outerR - 6;
+				var count = 15;
+				for (var i = 0; i < count; i++) {
+					var ang = (i / count) * Math.PI * 2 - Math.PI / 2;
+					var dot = document.createElement("span");
+					dot.className = "rim-bulb-dot";
+					dot.setAttribute("aria-hidden", "true");
+					dot.style.left = cx + rMid * Math.cos(ang) + "px";
+					dot.style.top = cy + rMid * Math.sin(ang) + "px";
+					rim.appendChild(dot);
+				}
+			}
+
+			function placeLabels() {
+				for (var i = 0; i < PRIZES.length; i++) {
+					var deg = i * SLICE + SLICE / 2;
+					var el = document.createElement("div");
+					var id = PRIZES[i].id;
+					var accent =
+						!PRIZES[i].lose && (id === "p3000" || id === "p10000") ? " accent-blue" : "";
+					el.className = "slice-label" + (PRIZES[i].lose ? " gray" : "") + accent;
+					el.textContent = PRIZES[i].wheelText;
+					/* 조각 이등분선 방향으로 밀고, 역회전 없이 텍스트가 원 접선 방향(중심 기준 기울임) */
+					el.style.transform =
+						"translate(-50%, -50%) rotate(" +
+						deg +
+						"deg) translateY(calc(-31cqw))";
+					wheel.appendChild(el);
+				}
+			}
+
+			function showWin(prize) {
+				modal.classList.remove("modal-lose");
+				modalTitle.textContent = "축하드립니다!";
+				modalSub.textContent = prize.full + "에 당첨되셨습니다!";
+
+				var imgSrc = prize.voucherImage || "";
+				var imgAlt = prize.full + " 이미지";
+
+				var wrap = document.createElement("div");
+				wrap.className = "voucher";
+				wrap.innerHTML =
+					(imgSrc
+						? '<div class="voucher-img-wrap"><img class="voucher-card-img" src="' +
+							imgSrc +
+							'" width="360" alt="' +
+							imgAlt.replace(/"/g, "&quot;") +
+							'" decoding="async" /></div>'
+						: "") +
+					'<p class="voucher-hint">매장에서 아래 바코드를 제시하면 교환됩니다.</p>' +
+					'<div class="barcode-wrap"><svg id="barcodeSvg"></svg></div>';
+
+				modalBody.innerHTML = "";
+				modalBody.appendChild(wrap);
+
+				if (typeof JsBarcode !== "undefined") {
+					JsBarcode("#barcodeSvg", prize.barcode, {
+						format: "CODE128",
+						width: 2,
+						height: 64,
+						displayValue: true,
+						fontSize: 14,
+						font: "Noto Sans KR, sans-serif",
+						margin: 8
+					});
+				}
+			}
+
+			function showLose() {
+				modal.classList.add("modal-lose");
+				modalTitle.textContent = "아쉬워요!";
+				modalSub.textContent = "다음 기회에 도전해 주세요.";
+				modalBody.innerHTML =
+					'<div class="voucher">' +
+					'<div class="brand" style="color:#0072bc; font-weight: bolder;">GS<span style="color:#33badf">25</span></div>' +
+					'<div class="amount" style="font-size:36px;color:#0971bd;font-weight: bolder;">꽝</div>' +
+					'<div class="type" style="font-size: small; font-weight: 600;">아쉽게도 당첨되지 않았습니다.</div>' +
+					"</div>";
+			}
+
+			function openModal(prize) {
+				if (prize.lose) {
+					showLose();
+					requestAnimationFrame(function () {
+						overlay.classList.add("show");
+					});
+					return;
+				}
+				showWin(prize);
+				/* DOM·바코드 반영 후 표시 — 빈 박스가 먼저 보였다가 커지는 이중 모션 완화 */
+				requestAnimationFrame(function () {
+					requestAnimationFrame(function () {
+						overlay.classList.add("show");
+					});
+				});
+			}
+
+			btnSpin.addEventListener("click", function () {
+				if (spinning) return;
+				spinning = true;
+				btnSpin.disabled = true;
+
+				var winIndex = Math.floor(Math.random() * PRIZES.length);
+				var centerDeg = winIndex * SLICE + SLICE / 2;
+				var neededRem = (360 - (centerDeg % 360)) % 360;
+				var currentRem = ((rotation % 360) + 360) % 360;
+				var deltaRem = (neededRem - currentRem + 360) % 360;
+				if (deltaRem === 0) deltaRem = 360;
+				var fullSpins = 360 * (6 + Math.floor(Math.random() * 3));
+				rotation = rotation + fullSpins + deltaRem;
+
+				wheel.style.transform = "rotate(" + rotation + "deg)";
+
+				setTimeout(function () {
+					spinning = false;
+					btnSpin.disabled = false;
+					openModal(PRIZES[winIndex]);
+				}, 4600);
+			});
+
+			btnClose.addEventListener("click", function () {
+				overlay.classList.remove("show");
+			});
+
+			overlay.addEventListener("click", function (e) {
+				if (e.target === overlay) overlay.classList.remove("show");
+			});
+
+			placeLabels();
+			placeRimBulbs();
+			requestAnimationFrame(function () {
+				requestAnimationFrame(placeRimBulbs);
+			});
+			window.addEventListener("resize", placeRimBulbs);
+		})();
+	</script>
+</body>
+</html>

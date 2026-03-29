@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.special.wedding.propose.mapper.ProposeRouletteMapper">
+
+	<select id="countActiveUserByUid" resultType="int">
+		SELECT COUNT(*)
+		FROM tbsi_user
+		WHERE uid = #{uid}
+		  AND use_flg = 'Y'
+	</select>
+
+	<select id="selectProposeByUid" resultType="com.special.wedding.propose.dto.ProposeRouletteRow">
+		SELECT
+			u.uid,
+			u.hp,
+			u.setter_nm AS setterNm,
+			u.getter_nm AS getterNm,
+			u.rl_nm AS rlNm,
+			c.resp_dt AS respDt,
+			c.t1,
+			c.t2,
+			c.start_dt AS startDt,
+			c.end_dt AS endDt,
+			c.main_txt AS mainTxt
+		FROM tbsi_user u
+		INNER JOIN tbsi_pp_content c ON c.uid = u.uid
+		WHERE u.uid = #{uid}
+		  AND u.use_flg = 'Y'
+		  AND c.use_flg = 'Y'
+	</select>
+</mapper>
