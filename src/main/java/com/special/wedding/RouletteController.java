@@ -19,10 +19,30 @@ public class RouletteController {
 		return "redirect:/event/roulette.html";
 	}
 
-	/** GS 편의점 룰렛 이벤트 안내 + QR 랜딩 (정적: /event/promo.html) */
+	/**
+	 * 프로모 랜딩: QR·버튼 → 정적 프로포즈 데모 (/propose/roulette.html)
+	 */
 	@GetMapping("/event/promo")
-	public String eventPromoLanding() {
-		return "redirect:/event/promo.html";
+	public String eventPromo(Model model) {
+		model.addAttribute("targetPath", "/propose/roulette.html");
+		return "event/promo";
+	}
+
+	/**
+	 * UID별 프로모: QR·버튼 → /event/{user_id}/roulette (use_flg=Y 일 때만)
+	 */
+	@GetMapping("/event/{user_id}/promo")
+	public String eventPromoByUser(
+		@PathVariable("user_id") String userId,
+		Model model,
+		HttpServletResponse response
+	) {
+		if (!proposeRouletteService.isUserActive(userId)) {
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			return "not-found";
+		}
+		model.addAttribute("targetPath", "/propose/" + userId + "/roulette");
+		return "event/promo";
 	}
 
 	/**
