@@ -734,6 +734,29 @@
 		/* 프로포즈 당첨·편지·최종 멘트 — 세로 중앙보다 위 (꽝 모달은 제외) */
 		.overlay.show .modal:not(.modal-lose) {
 			margin-top: max(-12vh, -120px);
+			max-height: min(86vh, 540px);
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+
+		.overlay.show .modal:not(.modal-lose) > h2,
+		.overlay.show .modal:not(.modal-lose) > .sub {
+			flex-shrink: 0;
+		}
+
+		.overlay.show .modal:not(.modal-lose) > .btn-close {
+			flex-shrink: 0;
+		}
+
+		/* 본문만 스크롤 — 바깥 모달 폭·최대 높이는 유지 */
+		.overlay.show .modal:not(.modal-lose) #modalBody {
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow-y: auto;
+			overflow-x: hidden;
+			-webkit-overflow-scrolling: touch;
+			overscroll-behavior: contain;
 		}
 
 		@keyframes modalReveal {
